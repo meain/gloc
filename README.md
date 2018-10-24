@@ -1,6 +1,8 @@
 # gloc
 
-Run a shell command in all the git repos in a dir
+Run a shell command in all the git repos in a directory.
+
+> Idea stolen from [`fabiospampinato/autogit`](https://github.com/fabiospampinato/autogit)
 
 
 ## Install
