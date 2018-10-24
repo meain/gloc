@@ -11,6 +11,7 @@ Run a shell command in all the git repos in a directory.
 ## Install
 
 ```
+dep ensure
 go install
 ```
 
@@ -25,6 +26,7 @@ go install
 ### Build
 
 ```
+dep ensure
 go build gloc.go
 ```
 
