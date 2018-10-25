@@ -83,25 +83,55 @@ func countRemaining(dirStatusList map[string]dirStatus) (int, []string) {
 	return count, repos
 }
 
+func getTtyHeightWidth() (int, int) {
+	cmd := exec.Command("stty", "size")
+	cmd.Stdin = os.Stdin
+	out, err := cmd.Output()
+	var height int
+	var width int
+	if err != nil {
+		height = 1
+		width = 50
+	}
+	hw := strings.Split(string(out), " ")
+	height, err = strconv.Atoi(hw[0])
+	if err != nil {
+		fmt.Println(err)
+		height = 1
+	}
+	width, err = strconv.Atoi(hw[1][:len(hw[1])-1])
+	if err != nil {
+		fmt.Println(err)
+		width = 50
+	}
+	return height, width
+}
+
 func printStatus(dirStatusList map[string]dirStatus, completion chan dirStatus) {
-	errorOutput := color.New(color.FgRed)
-	okOutput := color.New(color.FgGreen)
+	green := color.New(color.FgGreen).SprintFunc()
+	red := color.New(color.FgRed).SprintFunc()
+	white := color.New(color.FgWhite).SprintFunc()
+
 	fadedOutput := color.New(color.FgCyan)
 	for {
 		ds := <-completion
 		project := getProjectFromPath(ds.path)
 		fmt.Printf("\x1b[2K")
 		if ds.err {
-			errorOutput.Println(project)
+			fmt.Println(red("✖"), white(project))
 		} else {
-			okOutput.Println(project)
+			fmt.Println(green("✔"), white(project))
 		}
 		dirStatusList[ds.path] = ds
 		count, repos := countRemaining(dirStatusList)
-		if len(repos) > 4 {
-			repos = repos[:4]
+		_, width := getTtyHeightWidth()
+		finalOutput := strconv.Itoa(len(dirStatusList)-count) + "| " + strings.Join(repos, ", ")
+		if width < 5 {
+			finalOutput = ""
+		} else if len(finalOutput) > width {
+			finalOutput = finalOutput[:width-4] + "..."
 		}
-		fadedOutput.Printf(strconv.Itoa(len(dirStatusList)-count) + "| " + strings.Join(repos, ", ") + "\r")
+		fadedOutput.Printf(finalOutput + "\r")
 	}
 }
 
@@ -120,7 +150,7 @@ func main() {
 	var wg sync.WaitGroup
 
 	command := []string{"git", "fetch"}
-	root := "./"
+	root := "."
 
 	if len(os.Args) > 2 {
 		root = os.Args[2]
@@ -131,6 +161,11 @@ func main() {
 
 	root = expandDir(root)
 	gfiles := getGitDirs(root)
+
+	if len(gfiles) == 0 {
+		fmt.Printf("No repos found in '%s'\n", root)
+		return
+	}
 
 	dirStatusList := make(map[string]dirStatus)
 	for _, file := range gfiles {
