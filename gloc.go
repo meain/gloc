@@ -92,16 +92,15 @@ func getTtyHeightWidth() (int, int) {
 	if err != nil {
 		height = 1
 		width = 50
+		return height, width
 	}
 	hw := strings.Split(string(out), " ")
 	height, err = strconv.Atoi(hw[0])
 	if err != nil {
-		fmt.Println(err)
 		height = 1
 	}
 	width, err = strconv.Atoi(hw[1][:len(hw[1])-1])
 	if err != nil {
-		fmt.Println(err)
 		width = 50
 	}
 	return height, width
