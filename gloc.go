@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"os/exec"
 	"os/user"
@@ -124,6 +125,7 @@ func printStatus(dirStatusList map[string]dirStatus, completion chan dirStatus) 
 		dirStatusList[ds.path] = ds
 		count, repos := countRemaining(dirStatusList)
 		_, width := getTtyHeightWidth()
+		width = int(math.Min(float64(width), 100))
 		finalOutput := strconv.Itoa(len(dirStatusList)-count) + "| " + strings.Join(repos, ", ")
 		if width < 5 {
 			finalOutput = ""
