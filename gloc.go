@@ -124,6 +124,11 @@ func printStatus(dirStatusList map[string]dirStatus, completion chan dirStatus) 
 		}
 		dirStatusList[ds.path] = ds
 		count, repos := countRemaining(dirStatusList)
+
+		if count == len(dirStatusList) {
+			break
+		}
+
 		_, width := getTtyHeightWidth()
 		width = int(math.Min(float64(width), 100))
 		finalOutput := strconv.Itoa(len(dirStatusList)-count) + "| " + strings.Join(repos, ", ")
@@ -175,7 +180,11 @@ func main() {
 
 	completion := make(chan dirStatus)
 
-	go printStatus(dirStatusList, completion)
+	go func(dirStatusList map[string]dirStatus, completion chan dirStatus) {
+		wg.Add(1)
+		printStatus(dirStatusList, completion)
+		wg.Done()
+	}(dirStatusList, completion)
 
 	for _, gdir := range gfiles {
 		wg.Add(1)
