@@ -155,7 +155,7 @@ func expandDir(path string) string {
 func main() {
 	var wg sync.WaitGroup
 
-	command := []string{"git", "fetch"}
+	var command []string
 	root := "."
 
 	if len(os.Args) > 2 {
@@ -163,6 +163,12 @@ func main() {
 		command = strings.Split(os.Args[1], " ")
 	} else if len(os.Args) > 1 {
 		command = strings.Split(os.Args[1], " ")
+	} else {
+		red := color.New(color.FgRed).SprintFunc()
+		fmt.Println(red("ERROR: No command provided"))
+		fmt.Println("Usage: gloc \"<command>\" <path>")
+		fmt.Println("Example: gloc \"git fetch\" ~/Documents/Projects")
+		return
 	}
 
 	root = expandDir(root)
