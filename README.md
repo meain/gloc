@@ -2,7 +2,7 @@
 
 Run a shell command in all the git repos in a directory.
 
-![gif](https://i.imgur.com/1QbXHB6.gif)
+![gif](https://i.imgur.com/Ss2B2kR.gif)
 
 
 > Idea stolen from [`fabiospampinato/autogit`](https://github.com/fabiospampinato/autogit)
