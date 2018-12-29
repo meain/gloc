@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"math"
@@ -16,22 +17,38 @@ import (
 )
 
 // Gets directories which have .git in them
-func getGitDirs(root string) []string {
+func getGitDirs(root string, includeNonGit bool) []string {
 	// check for / at end
 	if root[len(root)-1] != '/' {
 		root = root + "/"
 	}
 
+	if includeNonGit {
+		file, err := os.Open(root)
+		if err != nil {
+			log.Fatal(err)
+		}
+		files, err := file.Readdirnames(-1)
+		for f := range files {
+			files[f] = root + files[f]
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+		return files
+	}
+
+	// if git dirs only
 	files, err := filepath.Glob(root + "*/.git")
 	if err != nil {
 		log.Fatal(err)
 	}
 	for index := range files {
-		file := files[index][:len(files[index])-4]
+		file := files[index][:len(files[index])-5]
 		files[index] = file
 	}
-
 	return files
+
 }
 
 func runCommand(path string, command []string, completion chan dirStatus) {
@@ -42,9 +59,9 @@ func runCommand(path string, command []string, completion chan dirStatus) {
 		output, err := cmd.CombinedOutput()
 
 		if err != nil {
-			completion <- dirStatus{path, true, true, output}
+			completion <- dirStatus{path, true, true, string(output)}
 		} else {
-			completion <- dirStatus{path, true, false, output}
+			completion <- dirStatus{path, true, false, string(output)}
 		}
 	} else {
 		cmd := exec.Command(command[0])
@@ -52,9 +69,9 @@ func runCommand(path string, command []string, completion chan dirStatus) {
 		output, err := cmd.CombinedOutput()
 
 		if err != nil {
-			completion <- dirStatus{path, true, true, output}
+			completion <- dirStatus{path, true, true, string(output)}
 		} else {
-			completion <- dirStatus{path, true, false, output}
+			completion <- dirStatus{path, true, false, string(output)}
 		}
 	}
 }
@@ -63,12 +80,12 @@ type dirStatus struct {
 	path   string
 	done   bool
 	err    bool
-	output []byte
+	output string
 }
 
 func getProjectFromPath(path string) string {
 	pathChunks := strings.Split(path, "/")
-	return pathChunks[len(pathChunks)-2]
+	return pathChunks[len(pathChunks)-1]
 }
 
 func countRemaining(dirStatusList map[string]dirStatus) (int, []string) {
@@ -107,10 +124,13 @@ func getTtyHeightWidth() (int, int) {
 	return height, width
 }
 
-func printStatus(dirStatusList map[string]dirStatus, completion chan dirStatus) {
+func printStatus(dirStatusList map[string]dirStatus, completion chan dirStatus, showOutput bool) {
 	green := color.New(color.FgGreen).SprintFunc()
 	red := color.New(color.FgRed).SprintFunc()
 	white := color.New(color.FgWhite).SprintFunc()
+
+	redbg := color.New(color.BgRed, color.FgBlack).SprintFunc()
+	greenbg := color.New(color.BgGreen, color.FgBlack).SprintFunc()
 
 	fadedOutput := color.New(color.FgCyan)
 	for {
@@ -118,9 +138,19 @@ func printStatus(dirStatusList map[string]dirStatus, completion chan dirStatus) 
 		project := getProjectFromPath(ds.path)
 		fmt.Printf("\x1b[2K")
 		if ds.err {
-			fmt.Println(red("✖"), white(project))
+			if showOutput {
+				fmt.Println(ds.output)
+				fmt.Println(redbg(" ✖ " + project + " "))
+			} else {
+				fmt.Println(red("✖"), white(project))
+			}
 		} else {
-			fmt.Println(green("✔"), white(project))
+			if showOutput {
+				fmt.Println(greenbg(" ✔ " + project + " "))
+				fmt.Println(ds.output)
+			} else {
+				fmt.Println(green("✔"), white(project))
+			}
 		}
 		dirStatusList[ds.path] = ds
 		count, repos := countRemaining(dirStatusList)
@@ -158,11 +188,18 @@ func main() {
 	var command []string
 	root := "."
 
-	if len(os.Args) > 2 {
-		root = os.Args[2]
-		command = strings.Split(os.Args[1], " ")
-	} else if len(os.Args) > 1 {
-		command = strings.Split(os.Args[1], " ")
+	var printOutput bool
+	var includeNonGit bool
+	flag.BoolVar(&printOutput, "show-output", false, "show output of the command")
+	flag.BoolVar(&includeNonGit, "non-git", false, "show output of the command")
+	flag.Parse()
+
+	args := flag.Args()
+	if len(args) > 1 {
+		root = args[1]
+		command = strings.Split(args[0], " ")
+	} else if len(flag.Args()) > 0 {
+		command = strings.Split(args[0], " ")
 	} else {
 		red := color.New(color.FgRed).SprintFunc()
 		fmt.Println(red("ERROR: No command provided"))
@@ -172,7 +209,7 @@ func main() {
 	}
 
 	root = expandDir(root)
-	gfiles := getGitDirs(root)
+	gfiles := getGitDirs(root, includeNonGit)
 
 	if len(gfiles) == 0 {
 		fmt.Printf("No repos found in '%s'\n", root)
@@ -181,14 +218,14 @@ func main() {
 
 	dirStatusList := make(map[string]dirStatus)
 	for _, file := range gfiles {
-		dirStatusList[file] = dirStatus{file, false, false, []byte{}}
+		dirStatusList[file] = dirStatus{file, false, false, ""}
 	}
 
 	completion := make(chan dirStatus)
 
 	go func(dirStatusList map[string]dirStatus, completion chan dirStatus) {
 		wg.Add(1)
-		printStatus(dirStatusList, completion)
+		printStatus(dirStatusList, completion, printOutput)
 		wg.Done()
 	}(dirStatusList, completion)
 
