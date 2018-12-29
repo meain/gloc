@@ -185,10 +185,8 @@ func expandDir(path string) string {
 func showHelp() {
 	fmt.Println("Usage: gloc \"<command>\" <path>")
 	fmt.Println("Optional parameters")
-	fmt.Println("  --help : shows this help")
-	fmt.Println("  --output : shows the output of the command")
-	fmt.Println("  --all-dirs : do for all directories. default is just git projects")
-	fmt.Println("Example: gloc \"git fetch\" ~/Documents/Projects")
+	flag.PrintDefaults()
+	fmt.Println("\nExample: gloc \"git fetch\" ~/Documents/Projects")
 }
 
 func main() {
@@ -201,6 +199,7 @@ func main() {
 	var printOutput bool
 	var includeNonGit bool
 
+	flag.Usage = showHelp
 	flag.BoolVar(&help, "help", false, "show help")
 	flag.BoolVar(&printOutput, "output", false, "show output of the command")
 	flag.BoolVar(&includeNonGit, "all-dirs", false, "show output of the command")
