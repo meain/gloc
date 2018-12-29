@@ -139,8 +139,8 @@ func printStatus(dirStatusList map[string]dirStatus, completion chan dirStatus, 
 		fmt.Printf("\x1b[2K")
 		if ds.err {
 			if showOutput {
-				fmt.Println(ds.output)
 				fmt.Println(redbg(" ✖ " + project + " "))
+				fmt.Println(ds.output)
 			} else {
 				fmt.Println(red("✖"), white(project))
 			}
