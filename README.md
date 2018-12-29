@@ -10,27 +10,15 @@ Run a shell command in all the git repos in a directory.
 
 ## Install
 
-```
-dep ensure
-go install
-```
+Download the binary from the [release page](https://github.com/meain/gloc/releases).
 
 ## Usage
 
 ```
-./gloc "git fetch" "./path/to/folder"
+gloc "git fetch" "./path/to/folder"
 ```
 
 You can provide two other flags
 
 - `--output` to show the output of the command
 - `--all-dirs` to do the command on all dirs and not just git projects
-
-## Development
-
-### Build
-
-```
-dep ensure
-go build gloc.go
-```
