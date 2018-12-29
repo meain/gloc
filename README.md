@@ -21,6 +21,11 @@ go install
 ./gloc "git fetch" "./path/to/folder"
 ```
 
+You can provide two other flags
+
+- `--output` to show the output of the command
+- `--all-dirs` to do the command on all dirs and not just git projects
+
 ## Development
 
 ### Build
@@ -29,7 +34,3 @@ go install
 dep ensure
 go build gloc.go
 ```
-
-## TODO
-
-- [ ] Option to show output and time
