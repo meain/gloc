@@ -182,17 +182,34 @@ func expandDir(path string) string {
 	return path
 }
 
+func showHelp() {
+	fmt.Println("Usage: gloc \"<command>\" <path>")
+	fmt.Println("Optional parameters")
+	fmt.Println("  --help : shows this help")
+	fmt.Println("  --output : shows the output of the command")
+	fmt.Println("  --all-dirs : do for all directories. default is just git projects")
+	fmt.Println("Example: gloc \"git fetch\" ~/Documents/Projects")
+}
+
 func main() {
 	var wg sync.WaitGroup
 
 	var command []string
 	root := "."
 
+	var help bool
 	var printOutput bool
 	var includeNonGit bool
-	flag.BoolVar(&printOutput, "show-output", false, "show output of the command")
-	flag.BoolVar(&includeNonGit, "non-git", false, "show output of the command")
+
+	flag.BoolVar(&help, "help", false, "show help")
+	flag.BoolVar(&printOutput, "output", false, "show output of the command")
+	flag.BoolVar(&includeNonGit, "all-dirs", false, "show output of the command")
 	flag.Parse()
+
+	if help {
+		showHelp()
+		return
+	}
 
 	args := flag.Args()
 	if len(args) > 1 {
@@ -203,8 +220,7 @@ func main() {
 	} else {
 		red := color.New(color.FgRed).SprintFunc()
 		fmt.Println(red("ERROR: No command provided"))
-		fmt.Println("Usage: gloc \"<command>\" <path>")
-		fmt.Println("Example: gloc \"git fetch\" ~/Documents/Projects")
+		showHelp()
 		return
 	}
 
