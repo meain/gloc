@@ -198,11 +198,14 @@ func main() {
 	var help bool
 	var printOutput bool
 	var includeNonGit bool
+	var maxGoroutines int
 
 	flag.Usage = showHelp
 	flag.BoolVar(&help, "help", false, "show help")
 	flag.BoolVar(&printOutput, "output", false, "show output of the command")
 	flag.BoolVar(&includeNonGit, "all-dirs", false, "show output of the command")
+	flag.IntVar(&maxGoroutines, "threads", 10, "number of parallel jobs") // threads is probably not the best flag name
+
 	flag.Parse()
 
 	if help {
@@ -237,6 +240,7 @@ func main() {
 	}
 
 	completion := make(chan dirStatus)
+	guard := make(chan struct{}, maxGoroutines)
 
 	go func(dirStatusList map[string]dirStatus, completion chan dirStatus) {
 		wg.Add(1)
@@ -246,9 +250,11 @@ func main() {
 
 	for _, gdir := range gfiles {
 		wg.Add(1)
+		guard <- struct{}{}
 		go func(gdir string) {
 			defer wg.Done()
 			runCommand(gdir, command, completion)
+			<-guard
 		}(gdir)
 	}
 
