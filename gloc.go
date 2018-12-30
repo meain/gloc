@@ -204,7 +204,7 @@ func main() {
 	flag.BoolVar(&help, "help", false, "show help")
 	flag.BoolVar(&printOutput, "output", false, "show output of the command")
 	flag.BoolVar(&includeNonGit, "all-dirs", false, "show output of the command")
-	flag.IntVar(&maxGoroutines, "threads", 10, "number of parallel jobs") // threads is probably not the best flag name
+	flag.IntVar(&maxGoroutines, "workers", 10, "number of parallel jobs")
 
 	flag.Parse()
 
