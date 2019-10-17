@@ -54,6 +54,10 @@ func getGitDirs(root string, includeNonGit bool, recurseInto bool) []string {
 				if err != nil {
 					return err
 				}
+				if info.Name() == "node_modules" || info.Name() == ".git" {
+					return filepath.SkipDir
+				}
+
 				if !info.IsDir() {
 					return nil
 				}
@@ -89,7 +93,6 @@ func getGitDirs(root string, includeNonGit bool, recurseInto bool) []string {
 		files[index] = file
 	}
 	return files
-
 
 }
 
