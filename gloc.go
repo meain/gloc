@@ -169,7 +169,7 @@ func getTtyHeightWidth() (int, int) {
 	return height, width
 }
 
-func printStatus(dirStatusList map[string]dirStatus, completion chan dirStatus, showOutput bool, ignoreEmpty bool) {
+func printStatus(dirStatusList map[string]dirStatus, completion chan dirStatus, showOutput bool, ignoreEmpty bool, ignoreErrors bool) {
 	green := color.New(color.FgGreen).SprintFunc()
 	red := color.New(color.FgRed).SprintFunc()
 	white := color.New(color.FgWhite).SprintFunc()
@@ -184,7 +184,7 @@ func printStatus(dirStatusList map[string]dirStatus, completion chan dirStatus, 
 		fmt.Printf("\x1b[2K")
 		if ds.err {
 			if showOutput {
-				if !(ignoreEmpty && len(ds.output) < 1) {
+				if !(ignoreEmpty && len(ds.output) < 1) && !ignoreErrors {
 					fmt.Println(redbg(" ✖ " + project + " "))
 					fmt.Println(ds.output)
 				}
@@ -247,6 +247,7 @@ func main() {
 	var help bool
 	var printOutput bool
 	var ignoreEmpty bool
+	var ignoreErrors bool
 	var recurseInto bool
 	var includeNonGit bool
 	var maxGoroutines int
@@ -255,6 +256,7 @@ func main() {
 	flag.BoolVar(&help, "help", false, "show help")
 	flag.BoolVar(&printOutput, "output", false, "show output of the command")
 	flag.BoolVar(&ignoreEmpty, "ignore-empty", false, "ignore showing if empty output")
+	flag.BoolVar(&ignoreErrors, "ignore-errors", false, "recursively fild all git dirs")
 	flag.BoolVar(&recurseInto, "recurse-into", false, "recursively fild all git dirs")
 	flag.BoolVar(&includeNonGit, "all-dirs", false, "show output of the command")
 	flag.IntVar(&maxGoroutines, "workers", 10, "number of parallel jobs")
@@ -297,7 +299,7 @@ func main() {
 
 	go func(dirStatusList map[string]dirStatus, completion chan dirStatus) {
 		wg.Add(1)
-		printStatus(dirStatusList, completion, printOutput, ignoreEmpty)
+		printStatus(dirStatusList, completion, printOutput, ignoreEmpty, ignoreErrors)
 		wg.Done()
 	}(dirStatusList, completion)
 
