@@ -16,8 +16,17 @@ import (
 	"github.com/fatih/color"
 )
 
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
 // Gets directories which have .git in them
-func getGitDirs(root string, includeNonGit bool) []string {
+func getGitDirs(root string, includeNonGit bool, recurseInto bool) []string {
 	// check for / at end
 	if root[len(root)-1] != '/' {
 		root = root + "/"
@@ -38,7 +47,39 @@ func getGitDirs(root string, includeNonGit bool) []string {
 		return files
 	}
 
-	// if git dirs only
+	if recurseInto {
+		var files []string
+		err := filepath.Walk(root,
+			func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				if !info.IsDir() {
+					return nil
+				}
+
+				file, err := os.Open(path)
+				defer file.Close()
+				if err != nil {
+					log.Fatal(err)
+				}
+				df, err := file.Readdirnames(-1)
+				if err != nil {
+					log.Fatal(err)
+				}
+				if stringInSlice(".git", df) {
+					files = append(files, path)
+				}
+
+				return nil
+			})
+		if err != nil {
+			log.Fatal(err)
+		}
+		return files
+	}
+
+	// if git dirs only & without recursive
 	files, err := filepath.Glob(root + "*/.git")
 	if err != nil {
 		log.Fatal(err)
@@ -48,6 +89,7 @@ func getGitDirs(root string, includeNonGit bool) []string {
 		files[index] = file
 	}
 	return files
+
 
 }
 
@@ -202,6 +244,7 @@ func main() {
 	var help bool
 	var printOutput bool
 	var ignoreEmpty bool
+	var recurseInto bool
 	var includeNonGit bool
 	var maxGoroutines int
 
@@ -209,6 +252,7 @@ func main() {
 	flag.BoolVar(&help, "help", false, "show help")
 	flag.BoolVar(&printOutput, "output", false, "show output of the command")
 	flag.BoolVar(&ignoreEmpty, "ignore-empty", false, "ignore showing if empty output")
+	flag.BoolVar(&recurseInto, "recurse-into", false, "recursively fild all git dirs")
 	flag.BoolVar(&includeNonGit, "all-dirs", false, "show output of the command")
 	flag.IntVar(&maxGoroutines, "workers", 10, "number of parallel jobs")
 
@@ -233,7 +277,7 @@ func main() {
 	}
 
 	root = expandDir(root)
-	gfiles := getGitDirs(root, includeNonGit)
+	gfiles := getGitDirs(root, includeNonGit, recurseInto)
 
 	if len(gfiles) == 0 {
 		fmt.Printf("No repos found in '%s'\n", root)
