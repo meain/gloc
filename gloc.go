@@ -124,7 +124,7 @@ func getTtyHeightWidth() (int, int) {
 	return height, width
 }
 
-func printStatus(dirStatusList map[string]dirStatus, completion chan dirStatus, showOutput bool) {
+func printStatus(dirStatusList map[string]dirStatus, completion chan dirStatus, showOutput bool, ignoreEmpty bool) {
 	green := color.New(color.FgGreen).SprintFunc()
 	red := color.New(color.FgRed).SprintFunc()
 	white := color.New(color.FgWhite).SprintFunc()
@@ -139,15 +139,19 @@ func printStatus(dirStatusList map[string]dirStatus, completion chan dirStatus, 
 		fmt.Printf("\x1b[2K")
 		if ds.err {
 			if showOutput {
-				fmt.Println(redbg(" ✖ " + project + " "))
-				fmt.Println(ds.output)
+				if !(ignoreEmpty && len(ds.output) < 1) {
+					fmt.Println(redbg(" ✖ " + project + " "))
+					fmt.Println(ds.output)
+				}
 			} else {
 				fmt.Println(red("✖"), white(project))
 			}
 		} else {
 			if showOutput {
-				fmt.Println(greenbg(" ✔ " + project + " "))
-				fmt.Println(ds.output)
+				if !(ignoreEmpty && len(ds.output) < 1) {
+					fmt.Println(greenbg(" ✔ " + project + " "))
+					fmt.Println(ds.output)
+				}
 			} else {
 				fmt.Println(green("✔"), white(project))
 			}
@@ -197,12 +201,14 @@ func main() {
 
 	var help bool
 	var printOutput bool
+	var ignoreEmpty bool
 	var includeNonGit bool
 	var maxGoroutines int
 
 	flag.Usage = showHelp
 	flag.BoolVar(&help, "help", false, "show help")
 	flag.BoolVar(&printOutput, "output", false, "show output of the command")
+	flag.BoolVar(&ignoreEmpty, "ignore-empty", false, "ignore showing if empty output")
 	flag.BoolVar(&includeNonGit, "all-dirs", false, "show output of the command")
 	flag.IntVar(&maxGoroutines, "workers", 10, "number of parallel jobs")
 
@@ -244,7 +250,7 @@ func main() {
 
 	go func(dirStatusList map[string]dirStatus, completion chan dirStatus) {
 		wg.Add(1)
-		printStatus(dirStatusList, completion, printOutput)
+		printStatus(dirStatusList, completion, printOutput, ignoreEmpty)
 		wg.Done()
 	}(dirStatusList, completion)
 
