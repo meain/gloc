@@ -98,27 +98,14 @@ func getGitDirs(root string, includeNonGit bool, recurseInto bool) []string {
 
 func runCommand(path string, fullCommand string, completion chan dirStatus) {
 	// TODO: define cmd outside, not sure how to set type
-	command := strings.Fields(fullCommand)
-	if len(command) > 1 {
-		cmd := exec.Command(command[0], command[1:]...)
-		cmd.Dir = path
-		output, err := cmd.CombinedOutput()
+	cmd := exec.Command("sh", "-c", fullCommand)
+	cmd.Dir = path
+	output, err := cmd.CombinedOutput()
 
-		if err != nil {
-			completion <- dirStatus{path, true, true, string(output)}
-		} else {
-			completion <- dirStatus{path, true, false, string(output)}
-		}
+	if err != nil {
+		completion <- dirStatus{path, true, true, string(output)}
 	} else {
-		cmd := exec.Command(command[0])
-		cmd.Dir = path
-		output, err := cmd.CombinedOutput()
-
-		if err != nil {
-			completion <- dirStatus{path, true, true, string(output)}
-		} else {
-			completion <- dirStatus{path, true, false, string(output)}
-		}
+		completion <- dirStatus{path, true, false, string(output)}
 	}
 }
 
