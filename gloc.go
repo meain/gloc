@@ -96,8 +96,9 @@ func getGitDirs(root string, includeNonGit bool, recurseInto bool) []string {
 
 }
 
-func runCommand(path string, command []string, completion chan dirStatus) {
+func runCommand(path string, fullCommand string, completion chan dirStatus) {
 	// TODO: define cmd outside, not sure how to set type
+	command := strings.Fields(fullCommand)
 	if len(command) > 1 {
 		cmd := exec.Command(command[0], command[1:]...)
 		cmd.Dir = path
@@ -241,7 +242,7 @@ func showHelp() {
 func main() {
 	var wg sync.WaitGroup
 
-	var command []string
+	var command string
 	root := "."
 
 	var help bool
@@ -271,9 +272,9 @@ func main() {
 	args := flag.Args()
 	if len(args) > 1 {
 		root = args[1]
-		command = strings.Split(args[0], " ")
+		command = args[0]
 	} else if len(flag.Args()) > 0 {
-		command = strings.Split(args[0], " ")
+		command = args[0]
 	} else {
 		red := color.New(color.FgRed).SprintFunc()
 		fmt.Println(red("ERROR: No command provided"))
