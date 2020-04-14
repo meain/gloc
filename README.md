@@ -10,6 +10,15 @@ Run a shell command in all the git repos in a directory.
 
 ## Install
 
+### macOS
+
+```
+brew tap meain/homebrew-meain
+brew install meain/homebrew-meain/gloc
+```
+
+### Manual
+
 Download the binary from the [release page](https://github.com/meain/gloc/releases).
 
 ## Usage
