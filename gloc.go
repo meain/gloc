@@ -160,7 +160,6 @@ func getTtyHeightWidth() (int, int) {
 func printStatus(dirStatusList map[string]dirStatus, completion chan dirStatus, showOutput bool, ignoreEmpty bool, ignoreErrors bool) {
 	green := color.New(color.FgGreen).SprintFunc()
 	red := color.New(color.FgRed).SprintFunc()
-	white := color.New(color.FgWhite).SprintFunc()
 
 	redbg := color.New(color.BgRed, color.FgBlack).SprintFunc()
 	greenbg := color.New(color.BgGreen, color.FgBlack).SprintFunc()
@@ -177,7 +176,7 @@ func printStatus(dirStatusList map[string]dirStatus, completion chan dirStatus, 
 					fmt.Println(ds.output)
 				}
 			} else {
-				fmt.Println(red("✖"), white(project))
+				fmt.Println(red("✖"), project)
 			}
 		} else {
 			if showOutput {
@@ -186,7 +185,7 @@ func printStatus(dirStatusList map[string]dirStatus, completion chan dirStatus, 
 					fmt.Println(ds.output)
 				}
 			} else {
-				fmt.Println(green("✔"), white(project))
+				fmt.Println(green("✔"), project)
 			}
 		}
 		dirStatusList[ds.path] = ds
